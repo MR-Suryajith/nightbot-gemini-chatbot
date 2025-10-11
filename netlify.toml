@@ -1,14 +1,16 @@
 [build]
   functions = "netlify/functions"
+  secrets_scan_omit_paths = [
+    "node_modules/@google/genai/LICENSE",
+    "node_modules/@google/genai/README.md",
+    "node_modules/ecdsa-sig-formatter/LICENSE",
+    "node_modules/gaxios/LICENSE",
+    "node_modules/gcp-metadata/LICENSE",
+    "node_modules/google-auth-library/LICENSE",
+    "node_modules/google-logging-utils/LICENSE",
+    "node_modules/node-fetch/lib/index.es.js"
+  ]
 
 [functions]
   external_node_modules = ["@google/genai", "node-fetch"]
   node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[build]
-  secrets_scan_omit_paths = ["node_modules/@google/genai/LICENSE", "node_modules/@google/genai/README.md", "node_modules/ecdsa-sig-formatter/LICENSE", "node_modules/gaxios/LICENSE", "node_modules/gcp-metadata/LICENSE", "node_modules/google-auth-library/LICENSE", "node_modules/google-logging-utils/LICENSE", "node_modules/node-fetch/lib/index.es.js"]
