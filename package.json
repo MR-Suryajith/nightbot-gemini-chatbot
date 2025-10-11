@@ -1,0 +1,21 @@
+{
+  "name": "nightbot-gemini-chatbot",
+  "version": "1.0.0",
+  "description": "A Nightbot chatbot integration with Google Gemini AI",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Build complete'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@google/genai": "^1.24.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

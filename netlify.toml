@@ -1,0 +1,11 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  external_node_modules = ["@google/genai", "node-fetch"]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
