@@ -1,43 +1,34 @@
 const { GoogleGenAI } = require("@google/genai");
+const fetch = require("node-fetch");
 
 exports.handler = async (event, context) => {
-  // Only allow POST requests
-  if (event.httpMethod !== "POST") {
+  let query = "";
+
+  // Parse from POST (JSON body)
+  if (event.httpMethod === "POST" && event.body) {
+    try {
+      const body = JSON.parse(event.body);
+      query = body.query || "";
+    } catch (err) {
+      // Fallback if body can't be parsed
+      query = "";
+    }
+  }
+
+  // Parse from GET (query parameters)
+  if (!query && event.queryStringParameters) {
+    query =
+      event.queryStringParameters.q || event.queryStringParameters.query || "";
+  }
+
+  if (!query || query.trim() === "") {
     return {
-      statusCode: 405,
-      body: JSON.stringify({ error: "Method not allowed" }),
+      statusCode: 200,
+      body: "Please provide a question to ask Gemini!",
     };
   }
 
   try {
-    // Get headers from Nightbot
-    const headers = event.headers;
-    const nightbotUser = headers["nightbot-user"];
-    const nightbotChannel = headers["nightbot-channel"];
-    const nightbotResponseUrl = headers["nightbot-response-url"];
-
-    // Parse query from request body or URL parameters
-    let query = "";
-
-    if (event.body) {
-      const body = JSON.parse(event.body);
-      query = body.query || "";
-    }
-
-    if (!query && event.queryStringParameters) {
-      query =
-        event.queryStringParameters.q ||
-        event.queryStringParameters.query ||
-        "";
-    }
-
-    if (!query || query.trim() === "") {
-      return {
-        statusCode: 200,
-        body: "Please provide a question to ask Gemini!",
-      };
-    }
-
     // Initialize Gemini AI client
     const ai = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
@@ -49,7 +40,7 @@ exports.handler = async (event, context) => {
       contents: query.trim(),
       config: {
         thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+          thinkingBudget: 0,
         },
       },
     });
@@ -57,46 +48,32 @@ exports.handler = async (event, context) => {
     let geminiResponse =
       response.text || "Sorry, I could not generate a response.";
 
-    // Limit response length to fit Nightbot's limits (400 characters for regular response)
+    // Nightbot 400-char limit safety margin
     if (geminiResponse.length > 350) {
       geminiResponse = geminiResponse.substring(0, 347) + "...";
     }
 
-    // If we have a response URL from Nightbot, post the response back
+    // Send to nightbot-response URL if available (from headers)
+    const nightbotResponseUrl =
+      event.headers &&
+      (event.headers["nightbot-response-url"] ||
+        event.headers["Nightbot-Response-Url"]);
     if (nightbotResponseUrl) {
-      // Use the response URL to send the message back to chat
-      const fetch = require("node-fetch");
-
       try {
         await fetch(nightbotResponseUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: geminiResponse,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: geminiResponse }),
         });
-
-        return {
-          statusCode: 200,
-          body: "Response sent to chat",
-        };
-      } catch (postError) {
-        console.error("Error posting to Nightbot response URL:", postError);
-        // Fall back to returning the response directly
-        return {
-          statusCode: 200,
-          body: geminiResponse,
-        };
+        return { statusCode: 200, body: "Response sent to chat" };
+      } catch (postErr) {
+        // fallback
+        return { statusCode: 200, body: geminiResponse };
       }
-    } else {
-      // Return response directly (for testing or if no response URL provided)
-      return {
-        statusCode: 200,
-        body: geminiResponse,
-      };
     }
+
+    // Standard return: text only
+    return { statusCode: 200, body: geminiResponse };
   } catch (error) {
     console.error("Error:", error);
     return {
