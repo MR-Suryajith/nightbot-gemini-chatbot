@@ -9,7 +9,7 @@
     "deploy": "netlify deploy --prod"
   },
   "dependencies": {
-    "@google/genai": "^1.24.0",
+    "@google/generative-ai": "^0.14.1", // <-- CHANGE THIS LINE
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
