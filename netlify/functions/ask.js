@@ -39,7 +39,7 @@ exports.handler = async (event, context) => {
 
   try {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Extract user info from Nightbot headers
     const nightbotUserHeader =
