@@ -69,7 +69,7 @@ exports.handler = async (event, context) => {
       3. If asked 'who are you?', say you are Pocopie assistant.
       4. If asked about '!gamble', explain it is a Streamlabs command with random chances.
       5. For all other questions, provide a helpful and correct answer.
-      6. ALWAYS keep your total response under 65 words.
+      6. ALWAYS keep your total response under 55 words.
     `;
 
     const fullPrompt = `${systemInstruction}\n\nUser Question: ${query.trim()}\n\nFriendly Answer:`;
