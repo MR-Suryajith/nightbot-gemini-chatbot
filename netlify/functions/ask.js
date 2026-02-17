@@ -115,6 +115,15 @@ exports.handler = async (event, context) => {
     return { statusCode: 200, body: geminiResponse };
   } catch (error) {
     console.error("Error:", error);
+
+    // Check for rate limit error (429) or service unavailable (503)
+    if (error.message && (error.message.includes("429") || error.message.includes("503"))) {
+       return {
+         statusCode: 429,
+         body: "I am currently overloaded with requests! Please try asking me again in a minute.",
+       };
+    }
+
     return {
       statusCode: 500,
       body: `Sorry, there was an error processing your request. Error details: ${error.message}`,
