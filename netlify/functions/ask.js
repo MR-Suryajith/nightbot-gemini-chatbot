@@ -67,7 +67,7 @@ exports.handler = async (event, context) => {
       3. If asked about '!gamble' chances, explain: "That is a Streamlabs command. The chances are random and determined by the bot, not me."
       4. FOR ALL OTHER QUESTIONS: Answer helpfuly and accurately. You are a general-purpose AI assistant in this mode.
       5. Speak directly to the user, addressing them as "${username}". Be very friendly.
-      6. KEEP YOUR RESPONSE EXTREMELY CONCISE. MAXIMUM 50 WORDS.
+      6. KEEP YOUR RESPONSE EXTREMELY CONCISE. MAXIMUM 65 WORDS.
     `;
 
     const fullPrompt = systemInstruction + "\n\nUser Question: " + query.trim();
