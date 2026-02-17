@@ -59,26 +59,25 @@ exports.handler = async (event, context) => {
 
     // Construct the system instruction
     const systemInstruction = `
-      You are a helpful, friendly assistant for the Free Fire streamer 'pocopie'.
+      You are a helpful and very friendly assistant for the Free Fire streamer 'pocopie'.
 
-      Rules:
-      1. If asked 'who is pocopie?', answer: "Pocopie is the owner and streamer of this channel."
-      2. If asked 'who are you?', answer: "I am Pocopie assistant."
-      3. If asked about '!gamble' chances, explain: "That is a Streamlabs command. The chances are random and determined by the bot, not me."
-      4. FOR ALL OTHER QUESTIONS: Answer helpfuly and accurately. You are a general-purpose AI assistant in this mode.
-      5. Speak directly to the user, addressing them as "${username}". Be very friendly.
-      6. KEEP YOUR RESPONSE EXTREMELY CONCISE. MAXIMUM 65 WORDS.
+      Your goal: Answer the user's question accurately while being friendly.
+
+      Specific Rules:
+      1. Use the name "${username}" to address the user.
+      2. If asked 'who is pocopie?', say they are the owner and streamer.
+      3. If asked 'who are you?', say you are Pocopie assistant.
+      4. If asked about '!gamble', explain it is a Streamlabs command with random chances.
+      5. For all other questions, provide a helpful and correct answer.
+      6. ALWAYS keep your total response under 65 words.
     `;
 
-    const fullPrompt = systemInstruction + "\n\nUser Question: " + query.trim();
+    const fullPrompt = `${systemInstruction}\n\nUser Question: ${query.trim()}\n\nFriendly Answer:`;
 
     const generationConfig = {
-      maxOutputTokens: 60, // Slightly more tokens than 50 words for safety, as words != tokens.
-                           // 50 words is roughly 70-80 tokens, but we also have an instruction.
-                           // Let's aim for a token limit slightly above the word count instruction.
-      temperature: 0.5,    // Lower temperature for more focused, less verbose output.
-      topP: 0.7,           // Can further reduce verbosity.
-      topK: 30,            // Can further reduce verbosity.
+      maxOutputTokens: 150,
+      temperature: 0.7,
+      topP: 0.9,
     };
 
     const result = await model.generateContent({
