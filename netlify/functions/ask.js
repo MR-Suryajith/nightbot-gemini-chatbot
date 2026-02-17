@@ -117,7 +117,7 @@ exports.handler = async (event, context) => {
     console.error("Error:", error);
     return {
       statusCode: 500,
-      body: "Sorry, there was an error processing your request.",
+      body: `Sorry, there was an error processing your request. Error details: ${error.message}`,
     };
   }
 };
