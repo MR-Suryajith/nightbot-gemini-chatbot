@@ -88,7 +88,7 @@ exports.handler = async (event, context) => {
     let geminiResponse =
       response.text() || "Sorry, I could not generate a response.";
 
-    const NIGHTBOT_CHAR_LIMIT = 350; // Still a good safety measure
+    const NIGHTBOT_CHAR_LIMIT = 450; // Increased to ensure 65 words fit without truncation
     if (geminiResponse.length > NIGHTBOT_CHAR_LIMIT) {
       geminiResponse = geminiResponse.substring(0, NIGHTBOT_CHAR_LIMIT - 3) + "...";
     }
