@@ -41,11 +41,35 @@ exports.handler = async (event, context) => {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    // --- **IMPORTANT CHANGES HERE FOR CONCISE PROMPT** ---
+    // Extract user info from Nightbot headers
+    const nightbotUserHeader =
+      event.headers &&
+      (event.headers["nightbot-user"] || event.headers["Nightbot-User"]);
 
-    // Prepend the instruction to the user's query
-    const PROMPT_INSTRUCTION = "Answer this question extremely concisely, in 50 words or less, directly to the user, as a friendly chatbot: ";
-    const fullPrompt = PROMPT_INSTRUCTION + query.trim();
+    let username = "Friend";
+    if (nightbotUserHeader) {
+      try {
+        // nightbot-user header format: name=display_name&provider=...
+        const params = new URLSearchParams(nightbotUserHeader);
+        username = params.get("name") || "Friend";
+      } catch (e) {
+        console.error("Error parsing nightbot-user header:", e);
+      }
+    }
+
+    // Construct the system instruction
+    const systemInstruction = `
+      You are a helpful, friendly assistant for the Free Fire streamer 'pocopie'.
+
+      Rules:
+      1. If asked 'who is pocopie?', answer: "Pocopie is the owner and streamer of this channel."
+      2. If asked 'who are you?', answer: "I am Pocopie assistant."
+      3. If asked about '!gamble' chances, explain: "That is a Streamlabs command. The chances are random and determined by the bot, not me."
+      4. Speak directly to the user, addressing them as "${username}". Be very friendly.
+      5. KEEP YOUR RESPONSE EXTREMELY CONCISE. MAXIMUM 50 WORDS.
+    `;
+
+    const fullPrompt = systemInstruction + "\n\nUser Question: " + query.trim();
 
     const generationConfig = {
       maxOutputTokens: 60, // Slightly more tokens than 50 words for safety, as words != tokens.
