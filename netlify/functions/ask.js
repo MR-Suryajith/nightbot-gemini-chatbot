@@ -75,7 +75,7 @@ exports.handler = async (event, context) => {
     const fullPrompt = `${systemInstruction}\n\nUser Question: ${query.trim()}\n\nFriendly Answer:`;
 
     const generationConfig = {
-      maxOutputTokens: 150,
+      maxOutputTokens: 100,
       temperature: 0.7,
       topP: 0.9,
     };
