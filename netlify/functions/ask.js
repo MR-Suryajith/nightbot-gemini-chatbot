@@ -51,7 +51,7 @@ exports.handler = async (event, context) => {
       try {
         // nightbot-user header format: name=display_name&provider=...
         const params = new URLSearchParams(nightbotUserHeader);
-        username = params.get("name") || "Friend";
+        username = params.get("displayName") || params.get("name") || "Friend";
       } catch (e) {
         console.error("Error parsing nightbot-user header:", e);
       }
