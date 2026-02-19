@@ -1,10 +1,9 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const fetch = require("node-fetch"); // Still good to include for broader compatibility
+const fetch = require("node-fetch");
 
 exports.handler = async (event, context) => {
   let query = "";
 
-  // Parse from POST (JSON body)
   if (event.httpMethod === "POST" && event.body) {
     try {
       const body = JSON.parse(event.body);
@@ -15,15 +14,12 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // Parse from GET (query parameters)
   if (!query && event.queryStringParameters) {
-    query =
-      event.queryStringParameters.q || event.queryStringParameters.query || "";
+    query = event.queryStringParameters.q || event.queryStringParameters.query || "";
   }
 
   const geminiApiKey = process.env.GEMINI_API_KEY;
   if (!geminiApiKey) {
-    console.error("GEMINI_API_KEY environment variable is not set.");
     return {
       statusCode: 500,
       body: "Server configuration error: Gemini API key is missing.",
@@ -33,15 +29,14 @@ exports.handler = async (event, context) => {
   if (!query || query.trim() === "") {
     return {
       statusCode: 200,
-      body: "Gemini Chatbot Function is operational. Please provide a query!",
+      body: "Pocopie AI is operational. Please provide a query!",
     };
   }
 
   try {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    // Extract user info from Nightbot headers
     const nightbotUserHeader =
       event.headers &&
       (event.headers["nightbot-user"] || event.headers["Nightbot-User"]);
@@ -49,54 +44,52 @@ exports.handler = async (event, context) => {
     let username = "Friend";
     if (nightbotUserHeader) {
       try {
-        // nightbot-user header format: name=display_name&provider=...
         const params = new URLSearchParams(nightbotUserHeader);
-        username = params.get("displayName") || params.get("name") || "Friend";
+        const displayName = params.get("displayName") || params.get("name") || "";
+        const isChannelId = /^UC[a-zA-Z0-9_-]{22}$/.test(displayName);
+        username = isChannelId || !displayName ? "Friend" : displayName;
       } catch (e) {
         console.error("Error parsing nightbot-user header:", e);
       }
     }
 
-    // Construct the system instruction
     const systemInstruction = `
-      You are a helpful and very friendly assistant for the Free Fire streamer 'pocopie'.
+      You are a helpful and friendly assistant for the Free Fire streamer 'pocopie'.
 
-      Your goal: Answer the user's question accurately while being friendly.
-
-      Specific Rules:
-      1. Use the name "${username}" to address the user.
+      Rules:
+      1. Address the user as "${username}".
       2. If asked 'who is pocopie?', say they are the owner and streamer.
-      3. If asked 'who are you?', say you are Pocopie assistant.
+      3. If asked 'who are you?', say you are Pocopie's assistant.
       4. If asked about '!gamble', explain it is a Streamlabs command with random chances.
       5. For all other questions, provide a helpful and correct answer.
-      6. ALWAYS keep your total response under 55 words including spaces and fullstops.
+      6. STRICTLY keep your total response under 50 words.
     `;
 
     const fullPrompt = `${systemInstruction}\n\nUser Question: ${query.trim()}\n\nFriendly Answer:`;
 
     const generationConfig = {
-      maxOutputTokens: 500,
+      maxOutputTokens: 300,
       temperature: 0.7,
       topP: 0.9,
     };
 
     const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: fullPrompt }] }], // Use structured content for clarity
-        generationConfig: generationConfig
+      contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+      generationConfig: generationConfig,
     });
-    const response = await result.response;
-    let geminiResponse =
-      response.text() || "Sorry, I could not generate a response.";
 
-    const NIGHTBOT_CHAR_LIMIT = 450; // Increased to ensure 65 words fit without truncation
+    const response = await result.response;
+    let geminiResponse = response.text() || "Sorry, I could not generate a response.";
+
+    const NIGHTBOT_CHAR_LIMIT = 400;
     if (geminiResponse.length > NIGHTBOT_CHAR_LIMIT) {
       geminiResponse = geminiResponse.substring(0, NIGHTBOT_CHAR_LIMIT - 3) + "...";
     }
 
     const nightbotResponseUrl =
       event.headers &&
-      (event.headers["nightbot-response-url"] ||
-        event.headers["Nightbot-Response-Url"]);
+      (event.headers["nightbot-response-url"] || event.headers["Nightbot-Response-Url"]);
+
     if (nightbotResponseUrl) {
       try {
         await fetch(nightbotResponseUrl, {
@@ -106,7 +99,7 @@ exports.handler = async (event, context) => {
         });
         return { statusCode: 200, body: "Response sent to chat" };
       } catch (postErr) {
-        console.error("Error sending response to Nightbot-Response-Url:", postErr);
+        console.error("Error sending to Nightbot-Response-Url:", postErr);
         return { statusCode: 200, body: geminiResponse };
       }
     }
@@ -114,10 +107,9 @@ exports.handler = async (event, context) => {
     return { statusCode: 200, body: geminiResponse };
   } catch (error) {
     console.error("Error:", error);
-
     return {
-      statusCode: 500, // Or whatever the error status is
-      body: `Error from Gemini API: ${error.message}${error.stack ? ' | ' + error.stack.split('\n')[0] : ''}`,
+      statusCode: 500,
+      body: `Error: ${error.message}`,
     };
   }
 };
